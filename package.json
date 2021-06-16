@@ -8,5 +8,14 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Vitor Emanuel Lourenco",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "joi": "^17.4.0",
+    "pg": "^8.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
 }
