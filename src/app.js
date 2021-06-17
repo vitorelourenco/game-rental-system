@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
-import { categorySchema, gameSchema } from './validationSchemas.js';
+import { categorySchema, gameSchema, customerSchema } from './validationSchemas.js';
 import joi from 'joi';
 
 const app = express();
@@ -53,7 +53,6 @@ app.post("/categories", async (req,res)=>{
     return;
   }
 
-  console.log(0)
   //checking if category doesnt exist already
   const fetchQuery = `
     SELECT
@@ -95,15 +94,18 @@ app.post("/categories", async (req,res)=>{
 
 //list all games
 app.get("/games", async (req,res)=>{
+  const queryName = req.query.name ?? "";
   const fetchQuery = `
     SELECT
       *
     FROM
       games
+    WHERE
+      name ILIKE $1
   ;`;
 
   try {
-    const dbGames = await connection.query(fetchQuery);
+    const dbGames = await connection.query(fetchQuery, [queryName+"%"]);
     const games = dbGames.rows;
     res.status(200).send(games)
   } catch(e) {
@@ -173,6 +175,132 @@ app.post("/games", async (req,res)=>{
   ;`;
   try {
     await connection.query(insertQuery,newGame);
+    res.sendStatus(200);
+  } catch(e) {
+    console.log(e);
+    res.sendStatus(500);
+    return;
+  }
+});
+
+//get customers - cpf is optional
+app.get("/customers", async (req,res)=>{
+  const cpfParam = (req.query.cpf ?? "")+"%";
+  const fetchQuery = `
+    SELECT *
+    FROM customers
+    WHERE cpf ILIKE $1
+  `;
+  try {
+    const customers = await connection.query(fetchQuery, [cpfParam]);
+    res.status(200).send(customers);
+  } catch(e) {
+    console.log(e);
+    res.sendStatus(500);
+    return;
+  }
+});
+
+//get customers - id is mandatory
+app.get("/customers", async (req,res)=>{
+  const reqId = req.params.id;
+  const idParam = parseInt(reqId);
+  const fetchQuery = `
+    SELECT *
+    FROM customers
+    WHERE id = $1
+  `;
+  try {
+    const customers = await connection.query(fetchQuery, [idParam]);
+    res.status(200).send(customers);
+  } catch(e) {
+    console.log(e);
+    res.sendStatus(500);
+    return;
+  }
+});
+
+//post customer 
+app.post("/customer", async (req,res)=>{
+  //validating frontend data
+  const {error: reqError, value: customer} = customerSchema.validate(req.body);
+  if (reqError) {
+    res.sendStatus(400);
+    return;
+  }
+
+  //checking if the cpf isnt a duplicate
+  const fetchQuery = `
+    SELECT *
+    FROM customers
+    WHERE cpf = $1
+  `;
+  try {
+    const existingCustomer = await connection.query(fetchQuery,[customer.cpf]);
+    if (existingCustomer.rows.length>0) throw new acceptanceError(409);
+  } catch(e) {
+    console.log(e);
+    res.sendStatus(e.status);
+    return;
+  }
+
+  const {name, phone, cpf, birthday} = customer;
+  const custemerParam = [name, phone, cpf, birthday];
+  const postQuery = `
+    INSERT INTO customers
+    (name, phone, cpf, birthday) VALUES ($1,$2,$3,$4)
+  `;
+  try {
+    await connection.query(postQuery,custemerParam);
+    res.sendStatus(201);
+  } catch(e) {
+    console.log(e);
+    res.sendStatus(500);
+    return;
+  }
+});
+
+app.put("/customer/:id", async (req,res)=>{
+  
+  //validating frontend data
+  const {error: reqError, value: customer} = customerSchema.validate(req.body);
+  if (reqError) {
+    res.sendStatus(400);
+    return;
+  }
+
+  const reqId = req.params.id;
+  const id = parseInt(reqId);
+
+  //checking if the cpf isnt a duplicate
+  const fetchQuery = `
+    SELECT *
+    FROM customers
+    WHERE cpf = $1 AND id <> $2
+  `;
+  try {
+    const existingCustomer = await connection.query(fetchQuery,[customer.cpf, id]);
+    if (existingCustomer.rows.length>0) throw new acceptanceError(409);
+  } catch(e) {
+    console.log(e);
+    res.sendStatus(e.status);
+    return;
+  }
+
+  const {name, phone, cpf, birthday} = customer;
+  const custemerParam = [id, name, phone, cpf, birthday];
+  const postQuery = `
+    UPDATE customers
+    SET 
+      name = $2,
+      phone = $3,
+      cpf = $4,
+      birthday = $5
+    WHERE 
+      id = $1
+  `;
+  try {
+    await connection.query(postQuery,custemerParam);
     res.sendStatus(200);
   } catch(e) {
     console.log(e);
