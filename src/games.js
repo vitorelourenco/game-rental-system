@@ -1,9 +1,14 @@
 import {gameSchema} from './validationSchemas.js';
 import acceptanceError from './acceptanceError.js';
+import orderAndPagination from "./orderAndPagination.js";
 
 //list all games
 export async function getGames (req, res, connection){
-  const queryName = req.query.name ?? "";
+  const queryName = (req.query.name ?? "")+"%";
+
+  const validOrders = ["id", "name", "stockTotal", "categoryId", "pricePerDay"];
+  const {orderBy, offset, limit} = orderAndPagination(req, validOrders);
+
   const fetchQuery = `
     SELECT 
       games.*, 
@@ -12,10 +17,13 @@ export async function getGames (req, res, connection){
     JOIN categories ON categories.id = games."categoryId"
     WHERE
       games.name ILIKE $1
+    ORDER BY ${orderBy}
+    OFFSET $2 ROWS
+    LIMIT $3
   ;`;
 
   try {
-    const dbGames = await connection.query(fetchQuery, [queryName+"%"]);
+    const dbGames = await connection.query(fetchQuery, [queryName, offset, limit]);
     const games = dbGames.rows;
     res.status(200).send(games)
   } catch(e) {

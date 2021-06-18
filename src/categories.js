@@ -1,17 +1,25 @@
 import {categorySchema} from './validationSchemas.js';
 import acceptanceError from './acceptanceError.js';
+import orderAndPagination from "./orderAndPagination.js";
 
 //list all categories
 export async function getCategories (req, res, connection){
+
+  const validOrders = ["id", "name"];
+  const {orderBy, offset, limit} = orderAndPagination(req, validOrders);
+
   const fetchQuery = `
   SELECT
     *
   FROM
     categories
+  ORDER BY ${orderBy}
+  OFFSET $1 ROWS
+  LIMIT $2
   ;`
 
   try {
-    const dbCategories = await connection.query(fetchQuery);
+    const dbCategories = await connection.query(fetchQuery,[offset, limit]);
     const categories = dbCategories.rows;
     res.status(200).send(categories)
   } catch(e) {

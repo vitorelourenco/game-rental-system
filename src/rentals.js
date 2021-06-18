@@ -1,5 +1,6 @@
 import { rentalSchema } from "./validationSchemas.js";
 import acceptanceError from "./acceptanceError.js";
+import orderAndPagination from "./orderAndPagination.js";
 
 export async function getRentals(req, res, connection) {
   const reqCustomerId = parseInt(req.query.customerId);
@@ -9,6 +10,9 @@ export async function getRentals(req, res, connection) {
   const reqGameId = parseInt(req.query.gameId);
   //zero returns all (fetchQuery)
   const gameId = reqGameId ? reqGameId : 0;
+
+  const validOrders = ["id", "customerId", "gameId", "rentDate", "daysRented", "returnDate", "originalPrice", "delayFee"];
+  const {orderBy, offset, limit} = orderAndPagination(req, validOrders);
 
   const fetchQuery = `
     SELECT 
@@ -25,10 +29,13 @@ export async function getRentals(req, res, connection) {
       ON games."categoryId" = categories.id 
     WHERE ($1 = 0 OR customers.id = $1)
       AND ($2 = 0 OR games.id = $2)
+    ORDER BY ${orderBy}
+    OFFSET $3 ROWS
+    LIMIT $4
   ;`;
 
   try {
-    const dbRentals = await connection.query(fetchQuery, [customerId, gameId]);
+    const dbRentals = await connection.query(fetchQuery, [customerId, gameId, offset, limit]);
     const rentals = dbRentals.rows.map(dbRental => {
       const rental = {...dbRental};
       delete rental["gName"];
@@ -47,7 +54,7 @@ export async function getRentals(req, res, connection) {
       game.categoryId = dbRental.catId;
       game.categoryName = dbRental.catName;
       rental.game = game;
-      
+
       return rental;
     });
     res.status(200).send(rentals);

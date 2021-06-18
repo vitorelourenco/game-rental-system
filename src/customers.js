@@ -1,16 +1,24 @@
 import {customerSchema} from './validationSchemas.js';
 import acceptanceError from './acceptanceError.js';
+import orderAndPagination from "./orderAndPagination.js";
 
 //get customers - cpf is optional
 export async function getCustomerByCPF (req,res,connection){
   const cpfParam = (req.query.cpf ?? "")+"%";
+
+  const validOrders = ["id", "name", "phone", "cpf", "birthday"];
+  const {orderBy, offset, limit} = orderAndPagination(req, validOrders);
+
   const fetchQuery = `
     SELECT *
     FROM customers
     WHERE cpf ILIKE $1
+    ORDER BY ${orderBy}
+    OFFSET $2 ROWS
+    LIMIT $3
   `;
   try {
-    const customers = await connection.query(fetchQuery, [cpfParam]);
+    const customers = await connection.query(fetchQuery, [cpfParam, offset, limit]);
     res.status(200).send(customers.rows);
   } catch(e) {
     console.log(e);
@@ -20,9 +28,11 @@ export async function getCustomerByCPF (req,res,connection){
 };
 
 //get customers - id is mandatory
+//order and pagination does not apply to single row response
 export async function getCustomerById (req,res,connection){
   const reqId = req.params.id;
   const idParam = parseInt(reqId);
+
   const fetchQuery = `
     SELECT *
     FROM customers
