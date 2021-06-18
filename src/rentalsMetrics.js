@@ -1,6 +1,6 @@
 class Metrics {
   constructor(row) {
-    this.revenue = row.baseSum + row.delaySum;
+    this.revenue = (parseInt(row.baseSum) + parseInt(row.delaySum)) || 0;
     this.rentals = parseInt(row.count);
     this.average = this.rentals === 0 ? null : parseInt(this.revenue / this.rentals);
   }
