@@ -9,27 +9,12 @@ export async function getCustomerByCPF (req,res,connection){
   const validOrders = ["id", "name", "phone", "cpf", "birthday"];
   const {orderBy, offset, limit} = orderAndPagination(req, validOrders);
 
-  // const fetchQuery = `
-  //   SELECT 
-  //     COUNT("gameId") AS "rentalsCount", 
-  //     games.*,
-  //     categories.name AS "categoryName"
-  //   FROM rentals
-  //   JOIN games ON games.id = "gameId"
-  //   JOIN categories ON categories.id = games."categoryId"
-  //   WHERE games.name ILIKE $1
-  //   GROUP BY "gameId", games.id, categories.name
-  //   ORDER BY ${orderBy}
-  //   OFFSET $2 ROWS
-  //   LIMIT $3
-  // `;
-
   const fetchQuery = `
     SELECT 
       COUNT("customerId") AS "rentalsCount", 
       customers.*
     FROM rentals
-    JOIN customers ON customers.id = rentals."customerId"
+    RIGHT JOIN customers ON customers.id = rentals."customerId"
     WHERE cpf ILIKE $1
     GROUP BY "customerId", customers.id
     ORDER BY ${orderBy}
@@ -57,7 +42,7 @@ export async function getCustomerById (req,res,connection){
       COUNT("customerId") AS "rentalsCount", 
       customers.*
     FROM rentals
-    JOIN customers ON customers.id = rentals."customerId"
+    RIGHT JOIN customers ON customers.id = rentals."customerId"
     WHERE customers.id = $1
     GROUP BY "customerId", customers.id
   `;

@@ -15,7 +15,7 @@ export async function getGames (req, res, connection){
       games.*,
       categories.name AS "categoryName"
     FROM rentals
-    JOIN games ON games.id = "gameId"
+    RIGHT JOIN games ON rentals."gameId" = games.id
     JOIN categories ON categories.id = games."categoryId"
     WHERE games.name ILIKE $1
     GROUP BY "gameId", games.id, categories.name
