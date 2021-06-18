@@ -11,6 +11,20 @@ export async function getRentals(req, res, connection) {
   //zero returns all (fetchQuery)
   const gameId = reqGameId ? reqGameId : 0;
 
+  const reqStatus = req.query.status;
+  //all returns all (fetchQuery)
+  const status = (reqStatus === "open" || reqStatus === "closed") ? reqStatus : "all";
+
+  const aDate = new Date(req.query.startDate);
+  if (isNaN(aDate.getTime())){
+    res.sendStatus(400);
+    return;
+  }
+
+  const reqStartDate = aDate.toISOString();
+  //all returns all (fetchQuery)
+  const startDate = reqStartDate ? reqStartDate : "none";
+
   const validOrders = ["id", "customerId", "gameId", "rentDate", "daysRented", "returnDate", "originalPrice", "delayFee"];
   const {orderBy, offset, limit} = orderAndPagination(req, validOrders);
 
@@ -27,15 +41,22 @@ export async function getRentals(req, res, connection) {
       ON rentals."gameId" = games.id
     JOIN categories 
       ON games."categoryId" = categories.id 
-    WHERE ($1 = 0 OR customers.id = $1)
-      AND ($2 = 0 OR games.id = $2)
+    WHERE 
+      ($3 = 0 OR customers.id = $1)
+      AND ($4 = 0 OR games.id = $2)
+      AND (
+        ($5 = 'all')
+        OR (($5 = 'open') AND (rentals."returnDate" IS NULL))
+        OR (($5 = 'closed') AND (rentals."returnDate" IS NOT NULL))
+      )
+      AND ($6 = 'none' OR rentals."rentDate" >= CAST($6 AS date) )
     ORDER BY ${orderBy}
-    OFFSET $3 ROWS
-    LIMIT $4
+    OFFSET $1 ROWS
+    LIMIT $2
   ;`;
 
   try {
-    const dbRentals = await connection.query(fetchQuery, [customerId, gameId, offset, limit]);
+    const dbRentals = await connection.query(fetchQuery, [offset, limit, customerId, gameId, status, startDate]);
     const rentals = dbRentals.rows.map(dbRental => {
       const rental = {...dbRental};
       delete rental["gName"];
@@ -60,6 +81,7 @@ export async function getRentals(req, res, connection) {
     res.status(200).send(rentals);
   } catch (e) {
     console.log(e);
+    if (e.status) res.sendStatus(e.status);
     res.sendStatus(500);
     return;
   }
