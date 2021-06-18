@@ -204,7 +204,7 @@ export async function returnRental(req, res, connection) {
   const d1 = new Date(rental.rentDate);
   const d2 = new Date(now);
   const miliDiff = d2 - d1;
-  const dayDiff = Math.floor(miliDiff / 1000 / 60 / 60 / 24);
+  const dayDiff = rental.daysRented - Math.floor(miliDiff / 1000 / 60 / 60 / 24);
   const delay = dayDiff > 0 ? dayDiff : 0;
   const delayFee = delay * rental.originalPrice;
 
