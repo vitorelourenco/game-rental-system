@@ -11,16 +11,18 @@ export async function getGames (req, res, connection){
 
   const fetchQuery = `
     SELECT 
-      games.*, 
+      COUNT("gameId") AS "rentalsCount", 
+      games.*,
       categories.name AS "categoryName"
-    FROM games
+    FROM rentals
+    JOIN games ON games.id = "gameId"
     JOIN categories ON categories.id = games."categoryId"
-    WHERE
-      games.name ILIKE $1
+    WHERE games.name ILIKE $1
+    GROUP BY "gameId", games.id, categories.name
     ORDER BY ${orderBy}
     OFFSET $2 ROWS
     LIMIT $3
-  ;`;
+  `;
 
   try {
     const dbGames = await connection.query(fetchQuery, [queryName, offset, limit]);
