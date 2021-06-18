@@ -45,8 +45,8 @@ export async function getRentals(req, res, connection) {
     JOIN categories 
       ON games."categoryId" = categories.id 
     WHERE 
-      ($3 = 0 OR customers.id = $1)
-      AND ($4 = 0 OR games.id = $2)
+      ($3 = 0 OR customers.id = $3)
+      AND ($4 = 0 OR games.id = $4)
       AND (
         ($5 = 'all')
         OR (($5 = 'open') AND (rentals."returnDate" IS NULL))
@@ -204,8 +204,8 @@ export async function returnRental(req, res, connection) {
   const d1 = new Date(rental.rentDate);
   const d2 = new Date(now);
   const miliDiff = d2 - d1;
-  const dayDiff = rental.daysRented - Math.floor(miliDiff / 1000 / 60 / 60 / 24);
-  const delay = dayDiff > 0 ? dayDiff : 0;
+  const dayDiff = Math.floor(miliDiff / 1000 / 60 / 60 / 24);
+  const delay = dayDiff > rental.daysRented ? dayDiff - rental.daysRented : 0;
   const delayFee = delay * rental.originalPrice;
 
   const putQuery = `

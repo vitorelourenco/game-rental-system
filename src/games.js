@@ -40,6 +40,7 @@ export async function postGame (req, res, connection){
   //validating frontend data
   const {error: reqError, value: game} = gameSchema.validate(req.body);
   if (reqError) {
+    console.log(reqError);
     res.sendStatus(400);
     return;
   }
