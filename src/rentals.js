@@ -15,15 +15,18 @@ export async function getRentals(req, res, connection) {
   //all returns all (fetchQuery)
   const status = (reqStatus === "open" || reqStatus === "closed") ? reqStatus : "all";
 
-  const aDate = new Date(req.query.startDate);
-  if (isNaN(aDate.getTime())){
-    res.sendStatus(400);
-    return;
+  //none returns all (fetchQuery)
+  let startDate = 'none';
+  if (req.query.startDate){
+    const aDate = new Date(req.query.startDate);
+    if (isNaN(aDate.getTime())){
+      res.sendStatus(400);
+      return;
+    }
+    else {
+      startDate = aDate.toISOString();
+    }
   }
-
-  const reqStartDate = aDate.toISOString();
-  //all returns all (fetchQuery)
-  const startDate = reqStartDate ? reqStartDate : "none";
 
   const validOrders = ["id", "customerId", "gameId", "rentDate", "daysRented", "returnDate", "originalPrice", "delayFee"];
   const {orderBy, offset, limit} = orderAndPagination(req, validOrders);
