@@ -55,6 +55,7 @@ export async function postCustomer(req,res,connection){
   //validating frontend data
   const {error: reqError, value: customer} = customerSchema.validate(req.body);
   if (reqError) {
+    console.log(reqError);
     res.sendStatus(400);
     return;
   }

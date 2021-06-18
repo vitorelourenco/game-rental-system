@@ -15,6 +15,7 @@ import {
   returnRental,
   deleteRental
 } from './rentals.js';
+import {getMetrics} from './rentalsMetrics.js';
 
 const app = express();
 app.use(express.json());
@@ -36,6 +37,8 @@ app.get("/rentals", (req,res)=>getRentals(req,res,connection));
 app.post("/rentals", (req,res)=>postRental(req,res,connection));
 app.post("/rentals/:id/return", (req,res)=>  returnRental(req,res,connection));
 app.delete("/rentals/:id", (req,res)=>  deleteRental(req,res,connection));
+
+app.get("/rentals/metrics", (req,res) => getMetrics(req,res,connection));
 
 const appPort = 4000;
 app.listen(appPort, () => console.log("App is listening to port " + appPort));

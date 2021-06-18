@@ -16,7 +16,7 @@ export const customerSchema = joi.object({
   name: joi.string().min(1).required(),
   phone: joi.string().pattern(/^\d{10,11}$/).required(),
   cpf: joi.string().pattern(/^\d{11}$/).required(),
-  birthday: joi.string().isoDate().required()
+  birthday: joi.date().required()
 });
 
 export const rentalSchema = joi.object({
