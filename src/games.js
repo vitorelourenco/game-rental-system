@@ -5,12 +5,13 @@ import acceptanceError from './acceptanceError.js';
 export async function getGames (req, res, connection){
   const queryName = req.query.name ?? "";
   const fetchQuery = `
-    SELECT
-      *
-    FROM
-      games
+    SELECT 
+      games.*, 
+      categories.name AS "categoryName"
+    FROM games
+    JOIN categories ON categories.id = games."categoryId"
     WHERE
-      name ILIKE $1
+      games.name ILIKE $1
   ;`;
 
   try {

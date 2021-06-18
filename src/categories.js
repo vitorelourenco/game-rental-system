@@ -59,7 +59,7 @@ export async function postCategory (req, res, connection){
   ;`;
   try {
     await connection.query(insertQuery,[category.name]);
-    res.sendStatus(200);
+    res.sendStatus(201);
   } catch(e) {
     console.log(e);
     res.sendStatus(500);
