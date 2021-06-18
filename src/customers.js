@@ -49,7 +49,7 @@ export async function getCustomerById (req,res,connection){
   try {
     const customers = await connection.query(fetchQuery, [idParam]);
     if (customers.rows.length !== 1) throw new acceptanceError(404);
-    res.status(200).send(customers.rows);
+    res.status(200).send(customers.rows[0]);
   } catch(e) {
     console.log(e);
     if (e.status) res.sendStatus(e.status);
