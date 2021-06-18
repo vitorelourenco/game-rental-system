@@ -30,10 +30,12 @@ export async function getCustomerById (req,res,connection){
   `;
   try {
     const customers = await connection.query(fetchQuery, [idParam]);
+    if (customers.rows.length !== 1) throw new acceptanceError(404);
     res.status(200).send(customers.rows);
   } catch(e) {
     console.log(e);
-    res.sendStatus(500);
+    if (e.status) res.sendStatus(e.status);
+    else res.sendStatus(500);
     return;
   }
 };

@@ -85,7 +85,7 @@ export async function postGame (req, res, connection){
   ;`;
   try {
     await connection.query(insertQuery,newGame);
-    res.sendStatus(200);
+    res.sendStatus(201);
   } catch(e) {
     console.log(e);
     res.sendStatus(500);

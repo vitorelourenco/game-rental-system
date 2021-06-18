@@ -29,42 +29,26 @@ export async function getRentals(req, res, connection) {
 
   try {
     const dbRentals = await connection.query(fetchQuery, [customerId, gameId]);
-    const rentals = [];
-    dbRentals.rows.forEach((dbRental) => {
-      const {
-        id,
-        customerId,
-        gameId,
-        rentDate,
-        daysRented,
-        returnDate,
-        originalPrice,
-        delayFee,
-      } = dbRental;
+    const rentals = dbRentals.rows.map(dbRental => {
+      const rental = {...dbRental};
+      delete rental["gName"];
+      delete rental["catId"];
+      delete rental["catName"];
+      delete rental["cName"];
 
       const customer = {};
-      customer.id = customerId;
+      customer.id = dbRental.customerId;
       customer.name = dbRental.cName;
+      rental.customer = customer;
 
       const game = {};
-      game.id = gameId;
+      game.id = dbRental.gameId;
       game.name = dbRental.gName;
       game.categoryId = dbRental.catId;
       game.categoryName = dbRental.catName;
-
-      const rental = {
-        id,
-        customerId,
-        gameId,
-        rentDate,
-        daysRented,
-        returnDate,
-        originalPrice,
-        delayFee,
-        customer,
-        game
-      };
-      rentals.push(rental);
+      rental.game = game;
+      
+      return rental;
     });
     res.status(200).send(rentals);
   } catch (e) {
@@ -152,7 +136,7 @@ export async function postRental(req, res, connection) {
     originalPrice,
     delayFee,
   ];
-  
+
   const insertQuery = `
     INSERT INTO rentals
     ("customerId", "gameId", "rentDate", "daysRented", "returnDate", "originalPrice", "delayFee")
